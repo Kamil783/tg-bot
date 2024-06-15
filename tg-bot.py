@@ -1,13 +1,26 @@
 import logging
 import random
+import xml.etree.ElementTree as ET
 
 import openai
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# Замените 'YOUR_TELEGRAM_BOT_TOKEN' и 'YOUR_OPENAI_API_KEY' своими ключами
-TELEGRAM_BOT_TOKEN = ''
-OPENAI_API_KEY = ''
+
+def load_config(file_path):
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+    config = {
+        "telegram_bot_token": root.find('telegramBotToken').text,
+        "open_api_key": root.find('openApiKey').text
+    }
+    return config
+
+
+config = load_config('config.xml')
+TELEGRAM_BOT_TOKEN = config['telegram_bot_token']
+OPENAI_API_KEY = config['open_api_key']
+
 
 # Настройка OpenAI
 openai.api_key = OPENAI_API_KEY
@@ -29,7 +42,7 @@ async def get_gpt_response(prompt, user_name):
             model="gpt-4o",
             messages=[
                 {"role": "system",
-                 "content": "Ты подписчик канала, который отвечает на посты и комментарии в телеграм-канале Амира. Твоя задача - отвечать в хвалебном и восхищенном стиле на сообщения пользователя с именем Амир, поддерживать с ним разговор, задавать вопросы о его жизни, а на сообщениями других пользователей можешь отвечать более грубо"},
+                 "content": "Тебя зовут Le Jawohl, к тебе могут обратиться как Jawohl или Le Jawohl, ты подписчик канала, который отвечает на посты и комментарии в телеграм-канале Амира. Твоя задача - хвалить сообщения пользователя с именем Амир, поддерживать с ним разговор, а на сообщениями других пользователей можешь отвечать более грубо"},
                 {"role": "user",
                  "content": "Ответь на сообщение от пользователя с именем " + user_name + ": " + prompt},
             ]
@@ -52,10 +65,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if update.message and (update.message.text or update.message.caption):
         print_message = False
         user_name = "Амир"
-        if update.message.from_user.username in ['deddara'] or update.message.from_user.first_name in ['Telegram']:
+        if update.message.from_user.username in ['deddara'] or update.message.from_user.first_name in ['Telegram', 'Channel']:
             print_message = True
         else:
-            randint = random.randint(1, 10)
+            randint = random.randint(1, 3) #рандом для обычных пользователей
             if randint == 5:
                 print_message = True
                 user_name = update.message.from_user.first_name
@@ -67,6 +80,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 user_message = update.message.caption
             response = await get_gpt_response(user_message, user_name)
             await update.message.reply_text(response)
+
 
 
 def main():
