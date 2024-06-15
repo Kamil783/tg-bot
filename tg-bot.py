@@ -55,8 +55,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if update.message.from_user.username in ['deddara'] or update.message.from_user.first_name in ['Telegram']:
             print_message = True
         else:
-            randint = random.randint(1, 2)
-            if randint == 1:
+            randint = random.randint(1, 10)
+            if randint == 5:
                 print_message = True
                 user_name = update.message.from_user.first_name
         if print_message:
